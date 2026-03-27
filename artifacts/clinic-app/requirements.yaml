@@ -1,0 +1,16 @@
+packages:
+  "framer-motion": "Animations and page transitions"
+  "recharts": "Dashboard analytics charts"
+  "date-fns": "Date manipulation and formatting"
+  "@hookform/resolvers": "Zod integration for react-hook-form"
+  "react-hook-form": "Form state management"
+
+images:
+  - path: "artifacts/clinic-app/public/images/logo.png"
+    description: "A modern, minimalist, premium medical clinic logo featuring a subtle leaf or health cross in dark teal and gold, transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - Application must be RTL (Right-to-Left) for Arabic
+  - All currency is SAR (Saudi Riyal)
+  - VAT is strictly 15% for all invoices

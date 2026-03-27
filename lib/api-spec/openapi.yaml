@@ -1,22 +1,35 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Nutrition Clinic Management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: appointments
+    description: Appointment management
+  - name: patients
+    description: Patient management
+  - name: doctors
+    description: Doctor management
+  - name: services
+    description: Service types and pricing
+  - name: invoices
+    description: Invoice and payment management
+  - name: notifications
+    description: Notification management
+  - name: files
+    description: File uploads
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +37,466 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /appointment-types:
+    get:
+      operationId: listAppointmentTypes
+      tags: [services]
+      summary: List appointment types
+      responses:
+        "200":
+          description: List of appointment types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppointmentType"
+
+  /services:
+    get:
+      operationId: listServices
+      tags: [services]
+      summary: List clinic services
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+
+  /doctors:
+    get:
+      operationId: listDoctors
+      tags: [doctors]
+      summary: List all doctors
+      responses:
+        "200":
+          description: List of doctors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Doctor"
+
+  /doctors/{doctorId}/availability:
+    get:
+      operationId: getDoctorAvailability
+      tags: [doctors]
+      summary: Get doctor available slots
+      parameters:
+        - name: doctorId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Available time slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeSlot"
+
+  /patients:
+    get:
+      operationId: listPatients
+      tags: [patients]
+      summary: List all patients
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of patients
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientsListResponse"
+    post:
+      operationId: createPatient
+      tags: [patients]
+      summary: Create a new patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientRequest"
+      responses:
+        "201":
+          description: Patient created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+
+  /patients/{patientId}:
+    get:
+      operationId: getPatient
+      tags: [patients]
+      summary: Get patient details
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+    patch:
+      operationId: updatePatient
+      tags: [patients]
+      summary: Update patient details
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePatientRequest"
+      responses:
+        "200":
+          description: Updated patient
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List all appointments
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, confirmed, completed, cancelled, no_show]
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: doctorId
+          in: query
+          schema:
+            type: string
+        - name: patientId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentsListResponse"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Create a new appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRequest"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+
+  /appointments/{appointmentId}:
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get appointment details
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Appointment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+    patch:
+      operationId: updateAppointment
+      tags: [appointments]
+      summary: Update appointment status or details
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAppointmentRequest"
+      responses:
+        "200":
+          description: Updated appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+    delete:
+      operationId: cancelAppointment
+      tags: [appointments]
+      summary: Cancel an appointment
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Appointment cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      summary: List all invoices
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, paid, void]
+        - name: patientId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoicesListResponse"
+    post:
+      operationId: createInvoice
+      tags: [invoices]
+      summary: Create a new invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceRequest"
+      responses:
+        "201":
+          description: Invoice created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /invoices/{invoiceId}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get invoice details
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+    patch:
+      operationId: updateInvoice
+      tags: [invoices]
+      summary: Update invoice status
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceRequest"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [appointments]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications
+      parameters:
+        - name: appointmentId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+    post:
+      operationId: sendNotification
+      tags: [notifications]
+      summary: Send a notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendNotificationRequest"
+      responses:
+        "201":
+          description: Notification sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /patient-files:
+    post:
+      operationId: createPatientFile
+      tags: [files]
+      summary: Create a patient file record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePatientFileRequest"
+      responses:
+        "201":
+          description: File record created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientFile"
+
+  /patient-files/{patientId}:
+    get:
+      operationId: listPatientFiles
+      tags: [files]
+      summary: List patient files
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of patient files
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PatientFile"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +507,593 @@ components:
       required:
         - status
 
+    AppointmentType:
+      type: object
+      properties:
+        id:
+          type: string
+        nameAr:
+          type: string
+        nameEn:
+          type: string
+        description:
+          type: string
+        durationMinutes:
+          type: integer
+        isActive:
+          type: boolean
+      required:
+        - id
+        - nameAr
+        - nameEn
+        - durationMinutes
+        - isActive
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+        nameAr:
+          type: string
+        nameEn:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        vatRate:
+          type: number
+          description: VAT rate (0.15 for Saudi 15% VAT)
+        isActive:
+          type: boolean
+      required:
+        - id
+        - nameAr
+        - nameEn
+        - price
+        - vatRate
+        - isActive
+
+    Doctor:
+      type: object
+      properties:
+        id:
+          type: string
+        nameAr:
+          type: string
+        nameEn:
+          type: string
+        specialization:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        bio:
+          type: string
+        isActive:
+          type: boolean
+      required:
+        - id
+        - nameAr
+        - nameEn
+        - isActive
+
+    TimeSlot:
+      type: object
+      properties:
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        isAvailable:
+          type: boolean
+      required:
+        - startTime
+        - endTime
+        - isAvailable
+
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+        nameAr:
+          type: string
+        nameEn:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female]
+        nationalId:
+          type: string
+        medicalHistory:
+          type: string
+        allergies:
+          type: string
+        metadata:
+          type: object
+          description: Flexible extra fields (weight, height, measurements, etc.)
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+      required:
+        - id
+        - nameAr
+        - phone
+        - isActive
+        - createdAt
+
+    CreatePatientRequest:
+      type: object
+      properties:
+        nameAr:
+          type: string
+        nameEn:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female]
+        nationalId:
+          type: string
+        medicalHistory:
+          type: string
+        allergies:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - nameAr
+        - phone
+
+    UpdatePatientRequest:
+      type: object
+      properties:
+        nameAr:
+          type: string
+        nameEn:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female]
+        nationalId:
+          type: string
+        medicalHistory:
+          type: string
+        allergies:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    PatientsListResponse:
+      type: object
+      properties:
+        patients:
+          type: array
+          items:
+            $ref: "#/components/schemas/Patient"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - patients
+        - total
+        - page
+        - limit
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        doctorId:
+          type: string
+        serviceId:
+          type: string
+        appointmentTypeId:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+        status:
+          type: string
+          enum: [scheduled, confirmed, completed, cancelled, no_show]
+        mode:
+          type: string
+          enum: [in_person, online]
+        notes:
+          type: string
+        videoLink:
+          type: string
+        patient:
+          $ref: "#/components/schemas/Patient"
+        doctor:
+          $ref: "#/components/schemas/Doctor"
+        service:
+          $ref: "#/components/schemas/Service"
+        appointmentType:
+          $ref: "#/components/schemas/AppointmentType"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - patientId
+        - scheduledAt
+        - status
+        - mode
+        - createdAt
+
+    CreateAppointmentRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+        doctorId:
+          type: string
+        serviceId:
+          type: string
+        appointmentTypeId:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        durationMinutes:
+          type: integer
+          default: 60
+        mode:
+          type: string
+          enum: [in_person, online]
+        notes:
+          type: string
+      required:
+        - patientId
+        - scheduledAt
+        - mode
+
+    UpdateAppointmentRequest:
+      type: object
+      properties:
+        scheduledAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [scheduled, confirmed, completed, cancelled, no_show]
+        mode:
+          type: string
+          enum: [in_person, online]
+        notes:
+          type: string
+        videoLink:
+          type: string
+
+    AppointmentsListResponse:
+      type: object
+      properties:
+        appointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - appointments
+        - total
+        - page
+        - limit
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        invoiceNumber:
+          type: string
+        patientId:
+          type: string
+        appointmentId:
+          type: string
+        subtotal:
+          type: number
+        vatAmount:
+          type: number
+        vatRate:
+          type: number
+        total:
+          type: number
+        status:
+          type: string
+          enum: [draft, sent, paid, void]
+        paymentMethod:
+          type: string
+          enum: [mada, apple_pay, stc_pay, cash, bank_transfer]
+        issueDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        paidAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        patient:
+          $ref: "#/components/schemas/Patient"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceItem"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - invoiceNumber
+        - patientId
+        - subtotal
+        - vatAmount
+        - vatRate
+        - total
+        - status
+        - issueDate
+        - createdAt
+
+    InvoiceItem:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        quantity:
+          type: integer
+        unitPrice:
+          type: number
+        total:
+          type: number
+      required:
+        - id
+        - description
+        - quantity
+        - unitPrice
+        - total
+
+    CreateInvoiceRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+        appointmentId:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              description:
+                type: string
+              quantity:
+                type: integer
+              unitPrice:
+                type: number
+            required:
+              - description
+              - quantity
+              - unitPrice
+        vatRate:
+          type: number
+          default: 0.15
+        paymentMethod:
+          type: string
+          enum: [mada, apple_pay, stc_pay, cash, bank_transfer]
+        dueDate:
+          type: string
+          format: date
+        notes:
+          type: string
+      required:
+        - patientId
+        - items
+
+    UpdateInvoiceRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, sent, paid, void]
+        paymentMethod:
+          type: string
+          enum: [mada, apple_pay, stc_pay, cash, bank_transfer]
+        paidAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+
+    InvoicesListResponse:
+      type: object
+      properties:
+        invoices:
+          type: array
+          items:
+            $ref: "#/components/schemas/Invoice"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - invoices
+        - total
+        - page
+        - limit
+
+    DashboardStats:
+      type: object
+      properties:
+        todayAppointments:
+          type: integer
+        weekAppointments:
+          type: integer
+        totalPatients:
+          type: integer
+        monthRevenue:
+          type: number
+        pendingInvoices:
+          type: integer
+        upcomingAppointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+      required:
+        - todayAppointments
+        - weekAppointments
+        - totalPatients
+        - monthRevenue
+        - pendingInvoices
+        - upcomingAppointments
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        appointmentId:
+          type: string
+        patientId:
+          type: string
+        type:
+          type: string
+          enum: [confirmation, reminder_24h, reminder_1h, follow_up, custom]
+        channel:
+          type: string
+          enum: [whatsapp, sms, email]
+        message:
+          type: string
+        status:
+          type: string
+          enum: [pending, sent, failed]
+        sentAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - channel
+        - status
+        - createdAt
+
+    SendNotificationRequest:
+      type: object
+      properties:
+        appointmentId:
+          type: string
+        patientId:
+          type: string
+        type:
+          type: string
+          enum: [confirmation, reminder_24h, reminder_1h, follow_up, custom]
+        channel:
+          type: string
+          enum: [whatsapp, sms, email]
+        message:
+          type: string
+      required:
+        - patientId
+        - type
+        - channel
+
+    PatientFile:
+      type: object
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        fileName:
+          type: string
+        fileType:
+          type: string
+          enum: [lab_result, nutrition_plan, prescription, other]
+        fileUrl:
+          type: string
+        fileSize:
+          type: integer
+        uploadedAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+      required:
+        - id
+        - patientId
+        - fileName
+        - fileType
+        - uploadedAt
+
+    CreatePatientFileRequest:
+      type: object
+      properties:
+        patientId:
+          type: string
+        fileName:
+          type: string
+        fileType:
+          type: string
+          enum: [lab_result, nutrition_plan, prescription, other]
+        fileUrl:
+          type: string
+        fileSize:
+          type: integer
+        notes:
+          type: string
+      required:
+        - patientId
+        - fileName
+        - fileType

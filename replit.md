@@ -2,7 +2,18 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+pnpm workspace monorepo for a Nutrition Clinic Management System (نظام إدارة عيادة التغذية) targeting the Saudi Arabian market. Arabic-first RTL UI.
+
+## Application
+
+- **clinic-app** (React + Vite, deployed at `/`): Full clinic management dashboard with Arabic RTL UI
+  - Dashboard with stats (appointments, patients, revenue in SAR)
+  - Appointments management (in-person + online modes)
+  - Patient records with JSONB metadata for flexible fields
+  - Invoices with 15% VAT (ZATCA-compliant), Saudi payment methods (Mada, Apple Pay, STC Pay)
+  - WhatsApp/SMS notification system
+  - Patient file management (lab results, nutrition plans, prescriptions)
+- **api-server** (Express 5, deployed at `/api`): REST API backend
 
 ## Stack
 
