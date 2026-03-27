@@ -1,0 +1,295 @@
+# Nutrition Clinic Booking System — Full Stack MVP
+
+## Project Overview
+Build a full-stack web application for a nutrition clinic in Saudi Arabia. The system handles appointment booking (in-person and online), payments, WhatsApp notifications, patient file management, and ZATCA-compliant invoicing.
+
+---
+
+## Tech Stack (Strict — Do Not Deviate)
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14 (App Router) + Tailwind CSS |
+| Backend | Node.js + Express (REST API) |
+| Database | PostgreSQL via Supabase |
+| ORM | Drizzle ORM |
+| Auth | Supabase Auth (JWT, role-based) |
+| File Storage | Supabase Storage |
+| Payments | Moyasar API |
+| WhatsApp | Twilio WhatsApp Business API |
+| Video Calls | Agora SDK |
+| Cache / Queue | Redis (Upstash) |
+| Deployment | Vercel (frontend) + Railway (backend) |
+
+---
+
+## Database Schema — Implement Exactly As Specified
+
+### Design Rules (Non-Negotiable)
+1. All primary keys must be **UUID** (`gen_random_uuid()`), never serial integers
+2. All deletions must be **soft delete** using `is_active BOOLEAN DEFAULT true` and `deleted_at TIMESTAMPTZ`
+3. Use **Lookup Tables** for any enumerable types (appointment types, specializations, etc.)
+4. Use **JSONB** column (`extra_info`) ONLY for unpredictable patient metadata (e.g. allergy flags, body measurements). Never use JSONB for fields that will be filtered or reported on.
+5. Use GIN index on all JSONB columns
+6. All timestamps must be `TIMESTAMPTZ` (timezone-aware)
+
+### Tables to Create
+
+```sql
+-- Lookup: appointment types (extensible without schema changes)
+CREATE TABLE appointment_types (
+  id          SERIAL PRIMARY KEY,
+  name_ar     TEXT NOT NULL,
+  name_en     TEXT NOT NULL,
+  is_active   BOOLEAN DEFAULT true
+);
+INSERT INTO appointment_types (name_ar, name_en) VALUES
+  ('حضوري في العيادة', 'In-Clinic'),
+  ('أونلاين عبر فيديو', 'Online Video');
+
+-- Users (patients + doctors in one table, separated by role)
+CREATE TABLE users (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  full_name     TEXT NOT NULL,
+  phone         TEXT UNIQUE NOT NULL,
+  email         TEXT UNIQUE,
+  role          TEXT NOT NULL CHECK (role IN ('patient', 'doctor', 'admin')),
+  birth_date    DATE,
+  gender        TEXT CHECK (gender IN ('male', 'female')),
+  is_active     BOOLEAN DEFAULT true,
+  deleted_at    TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT now(),
+  -- JSONB only for unknown/variable patient metadata
+  extra_info    JSONB DEFAULT '{}'
+);
+CREATE INDEX idx_users_extra_info ON users USING GIN (extra_info);
+
+-- Doctor availability slots
+CREATE TABLE availability_slots (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  doctor_id   UUID REFERENCES users(id),
+  day_of_week INT CHECK (day_of_week BETWEEN 0 AND 6),
+  start_time  TIME NOT NULL,
+  end_time    TIME NOT NULL,
+  is_active   BOOLEAN DEFAULT true
+);
+
+-- Appointments
+CREATE TABLE appointments (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id      UUID REFERENCES users(id),
+  doctor_id       UUID REFERENCES users(id),
+  type_id         INT REFERENCES appointment_types(id),
+  scheduled_at    TIMESTAMPTZ NOT NULL,
+  duration_min    INT DEFAULT 30,
+  status          TEXT DEFAULT 'pending' CHECK (status IN ('pending','confirmed','cancelled','completed','no_show')),
+  payment_status  TEXT DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid','paid','refunded')),
+  video_room_id   TEXT,
+  notes           TEXT,
+  is_active       BOOLEAN DEFAULT true,
+  deleted_at      TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Payments (ZATCA-compliant)
+CREATE TABLE payments (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  appointment_id  UUID REFERENCES appointments(id),
+  patient_id      UUID REFERENCES users(id),
+  amount_sar      NUMERIC(10,2) NOT NULL,
+  vat_amount      NUMERIC(10,2) NOT NULL,
+  total_amount    NUMERIC(10,2) NOT NULL,
+  moyasar_id      TEXT UNIQUE,
+  status          TEXT DEFAULT 'pending' CHECK (status IN ('pending','paid','failed','refunded')),
+  invoice_number  TEXT UNIQUE,
+  zatca_status    TEXT DEFAULT 'pending' CHECK (zatca_status IN ('pending','reported','cleared')),
+  paid_at         TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT now()
+);
+
+-- Patient files (lab results, nutrition plans)
+CREATE TABLE patient_files (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id    UUID REFERENCES users(id),
+  appointment_id UUID REFERENCES appointments(id),
+  file_url      TEXT NOT NULL,
+  file_name     TEXT NOT NULL,
+  file_type     TEXT CHECK (file_type IN ('lab_result', 'nutrition_plan', 'other')),
+  uploaded_by   UUID REFERENCES users(id),
+  is_active     BOOLEAN DEFAULT true,
+  deleted_at    TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT now()
+);
+
+-- WhatsApp notification log
+CREATE TABLE notifications_log (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  appointment_id  UUID REFERENCES appointments(id),
+  patient_id      UUID REFERENCES users(id),
+  type            TEXT CHECK (type IN ('confirmation','reminder_24h','reminder_1h','post_visit','invoice')),
+  channel         TEXT DEFAULT 'whatsapp',
+  status          TEXT CHECK (status IN ('sent','delivered','failed')),
+  twilio_sid      TEXT,
+  sent_at         TIMESTAMPTZ DEFAULT now()
+);
+```
+
+---
+
+## API Endpoints to Build
+
+### Auth
+- `POST /api/auth/register` — patient self-registration
+- `POST /api/auth/login` — returns JWT
+- `GET  /api/auth/me` — current user profile
+
+### Appointments
+- `GET  /api/appointments/slots?date=&doctor_id=` — available slots
+- `POST /api/appointments` — create booking, triggers WhatsApp confirmation
+- `GET  /api/appointments/:id` — details
+- `PUT  /api/appointments/:id/cancel` — soft cancel
+- `GET  /api/doctor/appointments` — doctor's schedule (auth: doctor role)
+
+### Payments
+- `POST /api/payments/initiate` — create Moyasar payment session
+- `POST /api/payments/webhook` — Moyasar callback, updates DB + triggers invoice
+- `GET  /api/payments/:id/invoice` — download ZATCA invoice PDF
+
+### Patient Files
+- `POST /api/files/upload` — upload to Supabase Storage, save record
+- `GET  /api/patients/:id/files` — list patient files
+- `DELETE /api/files/:id` — soft delete only
+
+### Doctor Dashboard
+- `GET  /api/doctor/patients` — all patients list
+- `GET  /api/doctor/patients/:id` — patient profile + files + appointments
+- `PUT  /api/doctor/availability` — update working hours
+
+---
+
+## WhatsApp Automation Flow (Twilio)
+
+Implement a background job (Bull queue via Redis) that handles:
+
+1. **On booking confirmation** → immediate message:
+   > "تم تأكيد موعدك يوم {date} الساعة {time}. نوع الموعد: {type}"
+
+2. **24 hours before** → reminder with location or video link:
+   - If in-clinic: attach Google Maps link
+   - If online: attach Agora room link
+
+3. **After appointment** → feedback request:
+   > "شكراً لزيارتك. كيف كانت تجربتك؟"
+
+4. **On payment** → send invoice PDF link
+
+---
+
+## Payment & ZATCA Requirements
+
+- VAT rate: **15%** (Saudi standard)
+- Invoice must include: seller name, CR number, VAT number, QR code (ZATCA Phase 1)
+- Use `invoice_number` as sequential identifier: format `INV-{YEAR}-{sequence}`
+- Store `zatca_status` on every payment record
+
+---
+
+## Frontend Pages to Build
+
+| Route | Page | Auth Required |
+|---|---|---|
+| `/` | Landing + booking CTA | No |
+| `/book` | Appointment booking flow (3 steps) | Patient |
+| `/dashboard` | Patient: upcoming appointments + files | Patient |
+| `/doctor` | Doctor dashboard: schedule + patients | Doctor |
+| `/doctor/patients/:id` | Patient full profile | Doctor |
+| `/admin` | Admin: all bookings + payments | Admin |
+
+---
+
+## Booking Flow UI (3 Steps)
+
+**Step 1 — Select appointment type:** In-clinic or Online Video (from `appointment_types` table)
+
+**Step 2 — Select date & time:** Calendar showing only available slots from `availability_slots`
+
+**Step 3 — Confirm & Pay:** Patient details + Moyasar payment widget
+
+After payment confirmation → trigger WhatsApp confirmation message automatically.
+
+---
+
+## Role-Based Access Control
+
+```
+patient → can: book, view own appointments, upload/view own files, pay
+doctor  → can: view schedule, view all patients, upload files, update availability
+admin   → can: everything + view payments + export reports
+```
+
+Enforce at middleware level on every protected route.
+
+---
+
+## Environment Variables Required
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Database
+DATABASE_URL=
+
+# Moyasar
+MOYASAR_API_KEY=
+MOYASAR_PUBLISHABLE_KEY=
+
+# Twilio
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_WHATSAPP_FROM=
+
+# Agora
+AGORA_APP_ID=
+AGORA_APP_CERTIFICATE=
+
+# Redis
+REDIS_URL=
+
+# App
+NEXT_PUBLIC_APP_URL=
+JWT_SECRET=
+VAT_RATE=0.15
+CLINIC_NAME=
+CLINIC_CR_NUMBER=
+CLINIC_VAT_NUMBER=
+```
+
+---
+
+## Code Quality Rules
+
+1. All API responses follow this shape:
+```json
+{ "success": true, "data": {}, "message": "" }
+{ "success": false, "error": "...", "code": 400 }
+```
+2. Every DB write goes through Drizzle ORM — no raw SQL except for the initial migration
+3. Never hard-delete any record — always set `is_active = false` and `deleted_at = now()`
+4. All phone numbers stored in E.164 format (`+966XXXXXXXXX`)
+5. Arabic UI text — the frontend must support RTL layout (`dir="rtl"`)
+6. All dates displayed in Hijri + Gregorian dual format where relevant
+
+---
+
+## Sprint Delivery Order
+
+Build in this exact order — do not jump ahead:
+
+**Sprint 1:** Database migrations → Auth (register/login/roles) → Appointment booking API → Doctor dashboard UI (schedule view)
+
+**Sprint 2:** Moyasar payment integration → Twilio WhatsApp notifications → Patient file upload → Video room creation (Agora)
+
+**Sprint 3:** ZATCA invoice generation → Admin panel → End-to-end testing → Production deployment config
