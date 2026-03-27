@@ -9,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication endpoints
   - name: appointments
     description: Appointment management
   - name: patients
@@ -1097,3 +1099,179 @@ components:
         - patientId
         - fileName
         - fileType
+
+    AuthUser:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        profileImageUrl:
+          type: string
+        role:
+          type: string
+          enum: [patient, doctor, admin]
+      required:
+        - id
+
+    AuthUserEnvelope:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+      required:
+        - user
+
+    GetCurrentAuthUserResponse:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+      required:
+        - user
+
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+
+    ExchangeMobileAuthorizationCodeBody:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+
+    ExchangeMobileAuthorizationCodeResponse:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    LogoutMobileSessionResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+
+    PaymentInitiateRequest:
+      type: object
+      properties:
+        appointmentId:
+          type: string
+        amount:
+          type: number
+        description:
+          type: string
+        callbackUrl:
+          type: string
+      required:
+        - amount
+        - callbackUrl
+
+    PaymentInitiateResponse:
+      type: object
+      properties:
+        paymentUrl:
+          type: string
+        paymentId:
+          type: string
+      required:
+        - paymentUrl
+        - paymentId
+
+    BookingRequest:
+      type: object
+      properties:
+        patientName:
+          type: string
+        patientPhone:
+          type: string
+        patientEmail:
+          type: string
+        doctorId:
+          type: string
+        serviceId:
+          type: string
+        appointmentTypeId:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        mode:
+          type: string
+          enum: [in_person, online]
+        notes:
+          type: string
+      required:
+        - patientName
+        - patientPhone
+        - scheduledAt
+        - mode
+
+    BookingResponse:
+      type: object
+      properties:
+        appointment:
+          $ref: '#/components/schemas/Appointment'
+        patient:
+          $ref: '#/components/schemas/Patient'
+        notificationSent:
+          type: boolean
+      required:
+        - appointment
+        - notificationSent
+
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      schema:
+        type: string

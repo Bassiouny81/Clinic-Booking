@@ -447,6 +447,105 @@ export interface CreatePatientFileRequest {
   notes?: string;
 }
 
+export type AuthUserRole = (typeof AuthUserRole)[keyof typeof AuthUserRole];
+
+export const AuthUserRole = {
+  patient: "patient",
+  doctor: "doctor",
+  admin: "admin",
+} as const;
+
+export interface AuthUser {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+  role?: AuthUserRole;
+}
+
+export interface AuthUserEnvelope {
+  user: AuthUser | null;
+}
+
+export interface GetCurrentAuthUserResponse {
+  user: AuthUser | null;
+}
+
+export interface MobileTokenExchangeRequest {
+  /** @minLength 1 */
+  code: string;
+  /** @minLength 1 */
+  code_verifier: string;
+  /** @minLength 1 */
+  redirect_uri: string;
+  /** @minLength 1 */
+  state: string;
+  /** @minLength 1 */
+  nonce?: string;
+}
+
+export interface ExchangeMobileAuthorizationCodeBody {
+  /** @minLength 1 */
+  code: string;
+  /** @minLength 1 */
+  code_verifier: string;
+  /** @minLength 1 */
+  redirect_uri: string;
+  /** @minLength 1 */
+  state: string;
+  /** @minLength 1 */
+  nonce?: string;
+}
+
+export interface ExchangeMobileAuthorizationCodeResponse {
+  token: string;
+}
+
+export interface LogoutMobileSessionResponse {
+  success: boolean;
+}
+
+export interface PaymentInitiateRequest {
+  appointmentId?: string;
+  amount: number;
+  description?: string;
+  callbackUrl: string;
+}
+
+export interface PaymentInitiateResponse {
+  paymentUrl: string;
+  paymentId: string;
+}
+
+export type BookingRequestMode =
+  (typeof BookingRequestMode)[keyof typeof BookingRequestMode];
+
+export const BookingRequestMode = {
+  in_person: "in_person",
+  online: "online",
+} as const;
+
+export interface BookingRequest {
+  patientName: string;
+  patientPhone: string;
+  patientEmail?: string;
+  doctorId?: string;
+  serviceId?: string;
+  appointmentTypeId?: string;
+  scheduledAt: string;
+  mode: BookingRequestMode;
+  notes?: string;
+}
+
+export interface BookingResponse {
+  appointment: Appointment;
+  patient?: Patient;
+  notificationSent: boolean;
+}
+
+export type AuthorizationSessionHeaderParameter = string;
+
 export type GetDoctorAvailabilityParams = {
   date: string;
 };
