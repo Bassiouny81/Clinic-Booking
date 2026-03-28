@@ -2,10 +2,11 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { patientsTable } from "@workspace/db/schema";
 import { eq, and, isNull, ilike, sql } from "drizzle-orm";
+import { requireAuth } from "../middlewares/roleMiddleware";
 
 const router: IRouter = Router();
 
-router.get("/patients", async (req, res) => {
+router.get("/patients", requireAuth, async (req, res) => {
   try {
     const { search, page = "1", limit = "20" } = req.query as {
       search?: string;

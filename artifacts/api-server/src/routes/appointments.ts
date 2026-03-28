@@ -8,6 +8,7 @@ import {
   appointmentTypesTable,
 } from "@workspace/db/schema";
 import { eq, and, isNull, sql, gte, lte, inArray } from "drizzle-orm";
+import { requireAuth } from "../middlewares/roleMiddleware";
 
 const router: IRouter = Router();
 
@@ -50,7 +51,7 @@ async function enrichAppointments(appointments: any[]) {
   }));
 }
 
-router.get("/appointments", async (req, res) => {
+router.get("/appointments", requireAuth, async (req, res) => {
   try {
     const { status, date, doctorId, patientId, page = "1", limit = "20" } = req.query as {
       status?: string;
@@ -105,7 +106,7 @@ router.get("/appointments", async (req, res) => {
   }
 });
 
-router.post("/appointments", async (req, res) => {
+router.post("/appointments", requireAuth, async (req, res) => {
   try {
     const { patientId, doctorId, serviceId, appointmentTypeId, scheduledAt, durationMinutes = 60, mode, notes } =
       req.body;
@@ -203,7 +204,7 @@ router.delete("/appointments/:appointmentId", async (req, res) => {
   }
 });
 
-router.get("/dashboard/stats", async (req, res) => {
+router.get("/dashboard/stats", requireAuth, async (req, res) => {
   try {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());

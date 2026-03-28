@@ -1,107 +1,87 @@
-# Workspace
+# عيادتي — Nutrition Clinic Management System
 
 ## Overview
 
-pnpm workspace monorepo for a Nutrition Clinic Management System (نظام إدارة عيادة التغذية) targeting the Saudi Arabian market. Arabic-first RTL UI.
+Full-stack clinic management system for the Saudi market. Arabic-first RTL UI, ZATCA-compliant invoicing, Moyasar payments, Twilio WhatsApp notifications, and Replit Auth.
 
 ## Application
 
-- **clinic-app** (React + Vite, deployed at `/`): Full clinic management dashboard with Arabic RTL UI
-  - Dashboard with stats (appointments, patients, revenue in SAR)
-  - Appointments management (in-person + online modes)
-  - Patient records with JSONB metadata for flexible fields
-  - Invoices with 15% VAT (ZATCA-compliant), Saudi payment methods (Mada, Apple Pay, STC Pay)
-  - WhatsApp/SMS notification system
-  - Patient file management (lab results, nutrition plans, prescriptions)
-- **api-server** (Express 5, deployed at `/api`): REST API backend
+- **clinic-app** (React + Vite at `/`): Full clinic management dashboard
+  - **Login page** — Replit Auth with "book without login" option
+  - **Public booking page** (`/book`) — 3-step flow: service → details → confirm + Moyasar payment
+  - **Dashboard** — stats, upcoming appointments, quick-action buttons (all wired)
+  - **Appointments** — list, create, confirm, complete, cancel
+  - **Patients** — card grid, search, add patient, clickable detail slide panel with appointment history
+  - **Invoices** — create with line items, VAT calc, print ZATCA-compliant HTML invoice, Moyasar pay
+  - **Notifications** — WhatsApp send, type selector (confirmation/reminder/follow-up/custom), history log
+
+- **api-server** (Express 5 at `/api`): REST API backend
+  - Auth: `/api/login`, `/api/callback`, `/api/logout`, `/api/auth/user` (Replit OIDC)
+  - Resources: patients, appointments, invoices, services, doctors, notifications, patientFiles, booking
+  - Payments: `POST /api/payments/initiate` (Moyasar), `GET /api/invoices/:id/print` (ZATCA HTML)
+  - Role guards: `requireAuth` applied to patients list, appointments list, invoices, dashboard stats
+
+## Integrations & Keys
+
+- **Moyasar**: `MOYASAR_SECRET_KEY`, `MOYASAR_PUBLISHABLE_KEY` — SAR payments (Mada, Apple Pay, STC Pay)
+- **Twilio**: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` — WhatsApp notifications
+- **Replit Auth**: OIDC via `REPL_ID`, sessions stored in PostgreSQL `sessions` table
+
+## Saudi/ZATCA Compliance
+
+- All prices in SAR (ريال سعودي)
+- VAT rate: 15% (standard KSA rate)
+- Invoice HTML includes clinic CR number, VAT number, ZATCA Phase 1 notice
+- `GET /api/invoices/:invoiceId/print` renders printable Arabic invoice with Cairo font
 
 ## Stack
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Monorepo**: pnpm workspaces
+- **Node.js**: 24, **pnpm**: latest, **TypeScript**: 5.9
+- **API**: Express 5 + Drizzle ORM + PostgreSQL
+- **Frontend**: React 18 + Vite + Tailwind CSS + shadcn/ui + TanStack Query
+- **Auth**: Replit OpenID Connect (PKCE), sessions in DB
+- **Payments**: Moyasar REST API
+- **Notifications**: Twilio WhatsApp API (real sending)
+- **API codegen**: Orval from OpenAPI 3.1 spec
 
 ## Structure
 
-```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+```
+artifacts/
+  api-server/          Express API (port via $PORT, proxied at /api)
+    src/routes/        auth, patients, appointments, invoices, notifications,
+                       services, doctors, patientFiles, booking, payments
+    src/lib/           auth.ts, whatsapp.ts, logger.ts
+    src/middlewares/   authMiddleware.ts, roleMiddleware.ts
+  clinic-app/          React+Vite frontend (port via $PORT, proxied at /)
+    src/pages/         dashboard, appointments, patients, invoices,
+                       notifications, book, not-found
+    src/components/    layout.tsx, ui/* (shadcn)
+    src/hooks/         use-clinic.ts (mutations + formatters)
+lib/
+  api-spec/            openapi.yaml + orval.config.ts
+  api-client-react/    Generated TanStack Query hooks
+  api-zod/             Generated Zod schemas
+  db/                  Drizzle schema + DB connection
+    src/schema/        appointments, patients, invoices, services, doctors,
+                       notifications, patientFiles, auth (users+sessions)
+  replit-auth-web/     useAuth() React hook
 ```
 
-## TypeScript & Composite Projects
+## Key Commands
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+```bash
+pnpm --filter @workspace/db run push          # Apply DB schema changes
+pnpm --filter @workspace/api-spec run codegen # Regenerate API client + Zod types
+pnpm --filter @workspace/api-server run dev   # Run API server
+pnpm --filter @workspace/clinic-app run dev   # Run frontend
+```
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## DB Schema Tables
 
-## Root Scripts
+`users`, `sessions`, `patients`, `doctors`, `services`, `appointmentTypes`, `appointments`, `invoices`, `invoiceItems`, `notifications`, `patientFiles`
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+## User Roles
 
-## Packages
-
-### `artifacts/api-server` (`@workspace/api-server`)
-
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
-
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
-
-### `lib/db` (`@workspace/db`)
-
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
-
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+`role` column on `users` table: `patient` | `doctor` | `admin` (default: `patient`)
