@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PAYMENTS_ENABLED } from "../config";
 import { useListInvoices, useListPatients } from "@workspace/api-client-react";
 import { useCreateInvoice, formatSAR, translatePaymentMethod, translateStatus } from "@/hooks/use-clinic";
 import { Card } from "@/components/ui/card";
@@ -262,7 +263,7 @@ export default function Invoices() {
                   size="lg"
                   disabled={createMutation.isPending}
                 >
-                  {createMutation.isPending ? "جاري الإصدار..." : "إصدار الفاتورة وتأكيد الدفع"}
+                  {createMutation.isPending ? "جاري الإصدار..." : "إصدار الفاتورة"}
                 </Button>
               </form>
             </Form>
@@ -354,7 +355,7 @@ export default function Invoices() {
                         >
                           <Printer className="w-4 h-4" />
                         </Button>
-                        {invoice.status !== "paid" && (
+                        {PAYMENTS_ENABLED && invoice.status !== "paid" && (
                           <Button
                             variant="ghost"
                             size="icon"

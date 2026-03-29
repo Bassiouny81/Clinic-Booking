@@ -128,7 +128,7 @@ export default function BookingPage() {
   const steps = [
     { num: 1, label: "نوع الموعد", icon: Calendar },
     { num: 2, label: "البيانات والوقت", icon: User },
-    { num: 3, label: "التأكيد والدفع", icon: CreditCard },
+    { num: 3, label: PAYMENTS_ENABLED ? "التأكيد والدفع" : "تأكيد الحجز", icon: CreditCard },
   ];
 
   return (
@@ -264,7 +264,7 @@ export default function BookingPage() {
       {step === 3 && (
         <Card>
           <CardHeader>
-            <CardTitle>تأكيد الموعد والدفع</CardTitle>
+            <CardTitle>{PAYMENTS_ENABLED ? "تأكيد الموعد والدفع" : "تأكيد الموعد"}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="bg-muted/50 rounded-xl p-5 space-y-3">
