@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PAYMENTS_ENABLED } from "../config";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -294,7 +295,7 @@ export default function BookingPage() {
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>← رجوع</Button>
               <Button className="flex-1" onClick={onBook}>
-                {selectedService ? "تأكيد والانتقال للدفع" : "تأكيد الحجز مجاناً"}
+                {selectedService && PAYMENTS_ENABLED ? "تأكيد والانتقال للدفع" : "تأكيد الحجز"}
               </Button>
             </div>
           </CardContent>
@@ -314,19 +315,28 @@ export default function BookingPage() {
 
             {selectedService && bookedAppointment && (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground">لإتمام الحجز يرجى الدفع الآن</p>
                 <div className="bg-muted/50 rounded-xl p-4 mb-4">
                   <div className="font-bold text-xl text-primary">{servicePriceWithVat.toFixed(2)} ر.س</div>
                   <div className="text-sm text-muted-foreground">شامل ضريبة القيمة المضافة 15%</div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground mb-4">
-                  <div className="flex flex-col items-center gap-1"><span className="text-2xl">💳</span>مدى</div>
-                  <div className="flex flex-col items-center gap-1"><span className="text-2xl">📱</span>Apple Pay</div>
-                  <div className="flex flex-col items-center gap-1"><span className="text-2xl">📲</span>STC Pay</div>
-                </div>
-                <Button className="w-full" size="lg" onClick={onPayWithMoyasar} disabled={paymentLoading}>
-                  {paymentLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />جاري التحويل...</> : "ادفع الآن عبر مدى / Apple Pay / STC Pay"}
-                </Button>
+                {PAYMENTS_ENABLED ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">لإتمام الحجز يرجى الدفع الآن</p>
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground mb-4">
+                      <div className="flex flex-col items-center gap-1"><span className="text-2xl">💳</span>مدى</div>
+                      <div className="flex flex-col items-center gap-1"><span className="text-2xl">📱</span>Apple Pay</div>
+                      <div className="flex flex-col items-center gap-1"><span className="text-2xl">📲</span>STC Pay</div>
+                    </div>
+                    <Button className="w-full" size="lg" onClick={onPayWithMoyasar} disabled={paymentLoading}>
+                      {paymentLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />جاري التحويل...</> : "ادفع الآن عبر مدى / Apple Pay / STC Pay"}
+                    </Button>
+                  </>
+                ) : (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex items-start gap-3">
+                    <span className="text-xl">💵</span>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">سيتم الدفع عند الحضور في العيادة</p>
+                  </div>
+                )}
               </div>
             )}
 
