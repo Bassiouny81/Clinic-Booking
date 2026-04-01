@@ -13,7 +13,15 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@workspace/replit-auth-web";
+function useAuth() {
+  return {
+    user: { firstName: "دكتورة سعاد", lastName: "", email: "doctor@clinic.com", id: "local" },
+    logout: () => {
+      localStorage.removeItem("local_auth");
+      window.location.href = "/";
+    },
+  };
+}
 
 const navItems = [
   { href: "/", label: "لوحة التحكم", icon: LayoutDashboard },

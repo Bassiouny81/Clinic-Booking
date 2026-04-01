@@ -3,7 +3,27 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
-import { useAuth } from "@workspace/replit-auth-web";
+
+import { useState } from "react";
+import LandingPage from "@/pages/landing";
+
+// Local dev auth mock
+export function useAuth() {
+  const isAuth = localStorage.getItem("local_auth") === "true";
+  return {
+    isAuthenticated: isAuth,
+    isLoading: false,
+    user: { firstName: "دكتورة سعاد", id: "local" },
+    login: () => {
+      localStorage.setItem("local_auth", "true");
+      window.location.href = "/";
+    },
+    logout: () => {
+      localStorage.removeItem("local_auth");
+      window.location.href = "/";
+    },
+  };
+}
 
 import Dashboard from "@/pages/dashboard";
 import Appointments from "@/pages/appointments";
@@ -91,28 +111,10 @@ function AppRoutes() {
         </Route>
       ) : (
         <Route>
-          {() => (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-8 p-6" dir="rtl">
-              <div className="text-center space-y-4 max-w-md">
-                <img src="/images/logo.png" alt="logo" className="w-20 h-20 rounded-2xl object-cover mx-auto" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                <h1 className="text-3xl font-bold">عيادتي</h1>
-                <p className="text-muted-foreground text-lg">نظام إدارة عيادة التغذية المتكامل</p>
-                <p className="text-sm text-muted-foreground">سجّل دخولك للوصول إلى لوحة التحكم</p>
-              </div>
-              <div className="space-y-4 w-full max-w-sm">
-                <LoginButton />
-                <div className="text-center">
-                  <span className="text-muted-foreground text-sm">أو </span>
-                  <a href="/book" className="text-primary text-sm underline hover:opacity-80">احجز موعداً بدون تسجيل دخول</a>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-center text-sm text-muted-foreground max-w-md w-full pt-4 border-t">
-                <div><div className="text-2xl mb-1">🏥</div>حجز مواعيد</div>
-                <div><div className="text-2xl mb-1">💳</div>دفع إلكتروني</div>
-                <div><div className="text-2xl mb-1">📱</div>واتساب</div>
-              </div>
-            </div>
-          )}
+          {() => {
+            const { login } = useAuth();
+            return <LandingPage onLogin={login} />;
+          }}
         </Route>
       )}
     </Switch>
