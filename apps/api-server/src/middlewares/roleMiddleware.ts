@@ -23,7 +23,7 @@ export function requireRole(...roles: Role[]) {
     const [user] = await db
       .select()
       .from(usersTable)
-      .where(eq(usersTable.id, req.user.id));
+      .where(eq(usersTable.id, (req.user as Express.User).id));
 
     if (!user) {
       res.status(401).json({ error: "User not found" });

@@ -103,7 +103,7 @@ export default function Invoices() {
   const pendingCount = invoicesRes?.invoices?.filter((i) => i.status !== "paid").length ?? 0;
   const totalRevenue = invoicesRes?.invoices
     ?.filter((i) => i.status === "paid")
-    .reduce((acc, i) => acc + parseFloat(i.total || "0"), 0) ?? 0;
+    .reduce((acc, i) => acc + Number(i.total || 0), 0) ?? 0;
 
   return (
     <div className="space-y-6">

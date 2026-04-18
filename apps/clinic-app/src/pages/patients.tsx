@@ -39,7 +39,7 @@ type Patient = {
 function PatientDetailSheet({ patient, open, onClose }: { patient: Patient | null; open: boolean; onClose: () => void }) {
   const { data: appointmentsRes } = useListAppointments(
     { patientId: patient?.id },
-    { query: { enabled: !!patient } }
+    { query: { enabled: !!patient } as any }
   );
 
   if (!patient) return null;

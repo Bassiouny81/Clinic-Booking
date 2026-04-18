@@ -11,9 +11,6 @@
     },
     {
       "path": "./packages/api-zod"
-    },
-    {
-      "path": "./packages/replit-auth-web"
     }
   ]
 }
