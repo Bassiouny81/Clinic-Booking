@@ -1,7 +1,9 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Apple, Activity, HeartPulse } from "lucide-react";
+import { CalendarDays, Apple, Activity, HeartPulse, Globe } from "lucide-react";
 import { motion } from "framer-motion";
+import { FaInstagram, FaSnapchat, FaWhatsapp, FaTiktok } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 export default function LandingPage({ onLogin }: { onLogin?: () => void }) {
   return (
@@ -133,6 +135,88 @@ export default function LandingPage({ onLogin }: { onLogin?: () => void }) {
                     {feature.desc}
                   </p>
                 </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+        {/* Contact Section */}
+        <section id="contact" className="py-24 bg-background">
+          <div className="container mx-auto px-6">
+            <div className="text-center mb-16 max-w-2xl mx-auto">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl text-foreground mb-4">تواصل معنا</h2>
+              <p className="text-lg text-muted-foreground">يمكنكم التواصل معنا والحصول على آخر التحديثات حول محاضرات ولقاءات د. سعاد من خلال الضغط على الروابط التالية</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              {[
+                {
+                  icon: <FaInstagram className="w-6 h-6" />,
+                  label: "انستقرام",
+                  handle: "Dr_S_Alsulami",
+                  href: "https://www.instagram.com/dr_s_alsulami?igsh=MWZsZTFteXB5cHlwcg%3D%3D&utm_source=qr",
+                  color: "text-pink-500",
+                  bg: "bg-pink-500/10",
+                },
+                {
+                  icon: <FaSnapchat className="w-6 h-6" />,
+                  label: "سناب شات",
+                  handle: "Dr_SAlsulami",
+                  href: "https://snapchat.com/t/ryUj6Ivv",
+                  color: "text-yellow-500",
+                  bg: "bg-yellow-500/10",
+                },
+                {
+                  icon: <FaXTwitter className="w-6 h-6" />,
+                  label: "تويتر",
+                  handle: "Dr_S_Alsulami",
+                  href: "https://x.com/dr_s_alsulami?s=11&t=WaQexWC1uW_sFW6kElT98A",
+                  color: "text-foreground",
+                  bg: "bg-muted",
+                },
+                {
+                  icon: <FaTiktok className="w-6 h-6" />,
+                  label: "تيك توك",
+                  handle: "dr_s_alsulami",
+                  href: "https://www.tiktok.com/@dr_s_alsulami",
+                  color: "text-foreground",
+                  bg: "bg-muted",
+                },
+                {
+                  icon: <FaWhatsapp className="w-6 h-6" />,
+                  label: "واتساب",
+                  handle: "+966 54 865 9742",
+                  href: "https://wa.link/btzhyv",
+                  color: "text-green-500",
+                  bg: "bg-green-500/10",
+                },
+                {
+                  icon: <Globe className="w-6 h-6" />,
+                  label: "الموقع الإلكتروني",
+                  handle: "sooadalsulami.com",
+                  href: "https://sooadalsulami.com",
+                  color: "text-primary",
+                  bg: "bg-primary/10",
+                },
+              ].map((item, i) => (
+                <motion.a
+                  key={i}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08, duration: 0.4 }}
+                  className="flex items-center gap-4 p-5 rounded-2xl border border-border bg-card hover:shadow-md transition-all hover:-translate-y-0.5 group"
+                >
+                  <div className={`w-12 h-12 rounded-xl ${item.bg} ${item.color} flex items-center justify-center flex-shrink-0`}>
+                    {item.icon}
+                  </div>
+                  <div className="text-right min-w-0">
+                    <p className="text-sm text-muted-foreground mb-0.5">{item.label}</p>
+                    <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">{item.handle}</p>
+                  </div>
+                </motion.a>
               ))}
             </div>
           </div>
