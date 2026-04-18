@@ -54,6 +54,14 @@ pnpm --filter @workspace/api-spec codegen
 
 ## Deployment
 
-Configured as a static site:
+### Replit (static site)
 - Build: `PORT=5000 pnpm --filter @workspace/clinic-app build`
 - Public dir: `apps/clinic-app/dist/public`
+
+### Vercel
+Configured via `vercel.json` at the root:
+- Build command: `pnpm --filter @workspace/clinic-app build`
+- Output directory: `apps/clinic-app/dist/public`
+- SPA rewrites: all routes → `/index.html` (for client-side routing via Wouter)
+
+To deploy: connect the repo to Vercel — it will auto-detect the `vercel.json` and use pnpm from the lockfile.
