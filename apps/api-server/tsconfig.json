@@ -4,7 +4,11 @@
     "outDir": "dist",
     "rootDir": "src",
     "esModuleInterop": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@workspace/api-zod": ["../../packages/api-zod/src/index.ts"],
+      "@workspace/db": ["../../packages/db/src/index.ts"]
+    }
   },
   "include": ["src"],
   "references": [
