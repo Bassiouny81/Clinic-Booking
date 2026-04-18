@@ -4,26 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
 
-import { useState } from "react";
 import LandingPage from "@/pages/landing";
 
-// Local dev auth mock
-export function useAuth() {
-  const isAuth = localStorage.getItem("local_auth") === "true";
-  return {
-    isAuthenticated: isAuth,
-    isLoading: false,
-    user: { firstName: "دكتورة سعاد", id: "local" },
-    login: () => {
-      localStorage.setItem("local_auth", "true");
-      window.location.href = "/";
-    },
-    logout: () => {
-      localStorage.removeItem("local_auth");
-      window.location.href = "/";
-    },
-  };
-}
+import { useAuth } from "@/hooks/use-auth";
 
 import Dashboard from "@/pages/dashboard";
 import Appointments from "@/pages/appointments";
