@@ -61,7 +61,7 @@ function LoginButton() {
 }
 
 function AppRoutes() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, login } = useAuth();
 
   if (isLoading) {
     return (
@@ -94,10 +94,7 @@ function AppRoutes() {
         </Route>
       ) : (
         <Route>
-          {() => {
-            const { login } = useAuth();
-            return <LandingPage onLogin={login} />;
-          }}
+          {() => <LandingPage onLogin={login} />}
         </Route>
       )}
     </Switch>
