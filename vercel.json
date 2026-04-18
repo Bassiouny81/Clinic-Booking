@@ -1,6 +1,6 @@
 {
   "framework": null,
   "buildCommand": "pnpm --filter @workspace/clinic-app build",
-  "outputDirectory": "apps/clinic-app/dist",
+  "outputDirectory": "dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
