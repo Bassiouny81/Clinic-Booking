@@ -4,6 +4,9 @@
     "outDir": "dist",
     "rootDir": "src",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "types": ["node"],
     "paths": {
       "@workspace/api-zod": ["../../packages/api-zod/src/index.ts"],
