@@ -1,5 +1,4 @@
 import * as oidc from "openid-client";
-import { type Request, type Response, type NextFunction } from "express";
 import type { AuthUser } from "@workspace/api-zod";
 import {
   clearSession,
@@ -8,24 +7,29 @@ import {
   getSession,
   updateSession,
   type SessionData,
-} from "../lib/auth";
+} from "../lib/auth.js";
 
+// ---- Express type augmentation ----
 declare global {
   namespace Express {
     interface User extends AuthUser {}
 
     interface Request {
       isAuthenticated(): this is AuthedRequest;
-
       user?: User | undefined;
     }
 
-    export interface AuthedRequest {
+    interface AuthedRequest extends Request {
       user: User;
     }
   }
 }
 
+// Augmented request type visible within this module
+type AugmentedRequest = Express.Request &
+  import("express").Request;
+
+// ---- Token refresh helper ----
 async function refreshIfExpired(
   sid: string,
   session: SessionData,
@@ -53,14 +57,15 @@ async function refreshIfExpired(
   }
 }
 
+// ---- Middleware ----
 export async function authMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  req.isAuthenticated = function (this: Request) {
+  req: AugmentedRequest,
+  res: import("express").Response,
+  next: import("express").NextFunction,
+): Promise<void> {
+  req.isAuthenticated = function () {
     return this.user != null;
-  } as Request["isAuthenticated"];
+  } as Express.Request["isAuthenticated"];
 
   const sid = getSessionId(req);
   if (!sid) {
