@@ -1,5 +1,5 @@
 import * as oidc from "openid-client";
-import { Router, type IRouter, type Request, type Response } from "express";
+import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { db, usersTable } from "@workspace/db";
 import {
@@ -45,7 +45,7 @@ const LogoutMobileSessionResponse = z.object({
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 
-const router: IRouter = Router();
+const router = Router();
 
 function getOrigin(req: Request): string {
   const proto = req.headers["x-forwarded-proto"] || "https";

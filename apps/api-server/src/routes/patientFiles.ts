@@ -1,9 +1,9 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { patientFilesTable } from "@workspace/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.get("/patient-files/:patientId", async (req, res) => {
   try {

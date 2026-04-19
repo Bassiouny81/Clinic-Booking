@@ -1,9 +1,9 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { doctorsTable, appointmentsTable } from "@workspace/db/schema";
 import { eq, and, isNull, gte, lte } from "drizzle-orm";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.get("/doctors", async (req, res) => {
   try {

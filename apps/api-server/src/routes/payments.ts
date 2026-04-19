@@ -1,9 +1,9 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { invoicesTable, invoiceItemsTable, patientsTable, appointmentsTable } from "@workspace/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
 
-const router: IRouter = Router();
+const router = Router();
 
 const MOYASAR_SECRET_KEY = process.env.MOYASAR_SECRET_KEY;
 const VAT_RATE = 0.15;

@@ -1,10 +1,10 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { notificationsTable, patientsTable, appointmentsTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendWhatsAppNotification, buildConfirmationMessage, buildReminderMessage, buildFollowUpMessage } from "../lib/whatsapp";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.get("/notifications", async (req, res) => {
   try {

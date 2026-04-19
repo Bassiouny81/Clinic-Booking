@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import {
   patientsTable,
@@ -10,7 +10,7 @@ import {
 import { eq, inArray } from "drizzle-orm";
 import { sendWhatsAppNotification } from "../lib/whatsapp";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.post("/booking", async (req, res) => {
   try {

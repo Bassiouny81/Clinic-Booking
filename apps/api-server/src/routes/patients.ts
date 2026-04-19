@@ -1,10 +1,10 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { patientsTable } from "@workspace/db/schema";
 import { eq, and, isNull, ilike, sql } from "drizzle-orm";
 import { requireAuth } from "../middlewares/roleMiddleware";
 
-const router: IRouter = Router();
+const router = Router();
 
 router.get("/patients", requireAuth, async (req, res) => {
   try {

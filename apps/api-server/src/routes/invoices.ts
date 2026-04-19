@@ -1,10 +1,10 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { invoicesTable, invoiceItemsTable, patientsTable } from "@workspace/db/schema";
 import { eq, and, isNull, sql, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/roleMiddleware";
 
-const router: IRouter = Router();
+const router = Router();
 
 async function enrichInvoices(invoices: any[]) {
   if (invoices.length === 0) return [];
