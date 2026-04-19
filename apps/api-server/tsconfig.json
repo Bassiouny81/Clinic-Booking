@@ -7,7 +7,7 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"],
+    "types": ["node", "express"],
     "paths": {
       "@workspace/api-zod": ["../../packages/api-zod/src/index.ts"],
       "@workspace/db": ["../../packages/db/src/index.ts"]

@@ -1,4 +1,5 @@
 import * as oidc from "openid-client";
+import { type Request, type Response, type NextFunction } from "express";
 import type { AuthUser } from "@workspace/api-zod";
 import {
   clearSession,
@@ -24,10 +25,6 @@ declare global {
     }
   }
 }
-
-// Augmented request type visible within this module
-type AugmentedRequest = Express.Request &
-  import("express").Request;
 
 // ---- Token refresh helper ----
 async function refreshIfExpired(
@@ -59,13 +56,13 @@ async function refreshIfExpired(
 
 // ---- Middleware ----
 export async function authMiddleware(
-  req: AugmentedRequest,
-  res: import("express").Response,
-  next: import("express").NextFunction,
+  req: Request,
+  res: Response,
+  next: NextFunction,
 ): Promise<void> {
-  req.isAuthenticated = function () {
+  req.isAuthenticated = function (this: Request) {
     return this.user != null;
-  } as Express.Request["isAuthenticated"];
+  } as Request["isAuthenticated"];
 
   const sid = getSessionId(req);
   if (!sid) {
