@@ -1,16 +1,16 @@
 import { Router } from "express";
-import healthRouter from "./health";
-import authRouter from "./auth";
-import appointmentTypesRouter from "./appointmentTypes";
-import servicesRouter from "./services";
-import doctorsRouter from "./doctors";
-import patientsRouter from "./patients";
-import appointmentsRouter from "./appointments";
-import invoicesRouter from "./invoices";
-import notificationsRouter from "./notifications";
-import patientFilesRouter from "./patientFiles";
-import paymentsRouter from "./payments";
-import bookingRouter from "./booking";
+import healthRouter from "./health.js";
+import authRouter from "./auth.js";
+import appointmentTypesRouter from "./appointmentTypes.js";
+import servicesRouter from "./services.js";
+import doctorsRouter from "./doctors.js";
+import patientsRouter from "./patients.js";
+import appointmentsRouter from "./appointments.js";
+import invoicesRouter from "./invoices.js";
+import notificationsRouter from "./notifications.js";
+import patientFilesRouter from "./patientFiles.js";
+import paymentsRouter from "./payments.js";
+import bookingRouter from "./booking.js";
 
 const router = Router();
 
