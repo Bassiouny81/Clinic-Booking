@@ -2,9 +2,9 @@ import express, { type Express, type Request, type Response } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { pinoHttp } from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
-import { authMiddleware } from "./middlewares/authMiddleware";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 
 const app: Express = express();
 
@@ -12,11 +12,11 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req: Request) {
+      req: (req: Request) => {
         return {
           id: (req as any).id,
-          method: req.method,
-          url: req.url?.split("?")[0],
+          method: (req as any).method || req.method,
+          url: (req as any).url?.split("?")[0] || req.url?.split("?")[0],
         };
       },
       res(res: Response) {
